@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Program>
+    <Header RobotName="Scara Robot" RobotType="RL-SCR-0100" GripperType="" Software="iRC V902-14-003" VelocitySetting="2" />
+    <Store Nr="1" Type="number" Value="0" Name="isFinish" Descr="" />
+    <Joint AbortCondition="False" Nr="2" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="463.71" a2="-84.26" a3="78.73" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="3" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="137.66" a2="-80.19" a3="78.73" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="4" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="73.16" a2="-6.6" a3="-1.51" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="5" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="6.86" a2="-6.6" a3="-1.51" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="Aqui el gripper deberia activarse" />
+    <Wait Nr="6" Type="Time" Seconds="3" Descr="" />
+    <Joint AbortCondition="False" Nr="7" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="109.46" a2="-15.67" a3="-1.51" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="8" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="109.46" a2="-74.84" a3="66.98" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="9" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="469.96" a2="-74.84" a3="66.98" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="10" Source="Numerical" velPercent="25" acc="40" smooth="0" a1="449.96" a2="-30.35" a3="66.98" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="Aqui deberia el gripper soltar" />
+    <Wait Nr="11" Type="Time" Seconds="3" Descr="" />
+    <Joint AbortCondition="True" Nr="12" Source="Numerical" velPercent="25" acc="40" smooth="0" a1="469.96" a2="-30.35" a3="66.98" a4="27.9" a5="0" a6="0" e1="0" e2="0" e3="0" Descr="" />
+    <Store Nr="13" Type="number" Value="1" Name="isfinish" Descr="" />
+</Program>

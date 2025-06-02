@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Program>
+    <Header RobotName="igus REBEL-6DOF" RobotType="REBEL-6DOF-01" GripperType="" Software="iRC V902-14-003" VelocitySetting="0" />
+    <Joint AbortCondition="False" Nr="1" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="-27.31" a2="32.4" a3="61.46" a4="0.01" a5="86.98" a6="0.02" e1="1680.5" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="2" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="-27.31" a2="32.4" a3="61.46" a4="0.01" a5="86.98" a6="0.02" e1="2543.98" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="3" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="60" a2="32.4" a3="61.46" a4="0.01" a5="86.98" a6="0.02" e1="2543.98" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="4" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="58.57" a2="72.19" a3="51.22" a4="-0.01" a5="54.62" a6="0.02" e1="2543.98" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="5" Source="Numerical" velPercent="15" acc="10" smooth="0" a1="58.57" a2="76.7" a3="51.22" a4="-0.01" a5="52.3" a6="0.02" e1="2543.98" e2="0" e3="0" Descr="Se activa el Gripper" />
+    <Wait Nr="6" Type="Time" Seconds="2" Descr="" />
+    <Joint AbortCondition="False" Nr="7" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="60.44" a2="45.2" a3="48.33" a4="-0.01" a5="83.28" a6="0.02" e1="1680.5" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="8" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="62.36" a2="67.93" a3="47.42" a4="0.01" a5="66.43" a6="0.02" e1="1680.5" e2="0" e3="0" Descr="" />
+    <Joint AbortCondition="False" Nr="9" Source="Numerical" velPercent="40" acc="40" smooth="0" a1="62.36" a2="72" a3="49" a4="0.01" a5="60" a6="0.02" e1="1680.5" e2="0" e3="0" Descr="" />
+    <Wait Nr="10" Type="Time" Seconds="2" Descr="" />
+</Program>
