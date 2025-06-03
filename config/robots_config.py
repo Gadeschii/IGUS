@@ -25,8 +25,8 @@ robots = {
       "Rebel2": {
         "ip": "192.168.3.102",
         "port": 3920,
-        "program_name": "Rebel2.xml",
-        "sequence_path": "sequences/Rebel2/Rebel2.xml",
+        "program_name": "Rebel1.xml",
+        "sequence_path": "sequences/Rebel2/Rebel1.xml",
         "id": "rebel2",
     },
  
