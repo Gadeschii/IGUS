@@ -2,50 +2,47 @@ import time
 from cri_lib import CRIController
 
 class IgusRobot:
-    def __init__(self, ip, port, program_name, sequence_path, remote_folder="Programs"):
+    def __init__(self, ip, port, program_name, sequence_path, remote_folder="Programs", wait_timeout=25, robot_id=""):
         self.ip = ip
         self.port = port
         self.program_name = program_name
         self.sequence_path = sequence_path
         self.remote_folder = remote_folder
+        self.wait_timeout = wait_timeout
         self.controller = CRIController()
         self._last_status = None
-
-        # Registrar callback de estado
+        self.robot_id = robot_id.lower()
         self.controller.register_status_callback(self.status_callback)
 
     def status_callback(self, state):
         self._last_status = state
 
-    def wait_for_finish_signal(self, signal_id="isFinish", timeout=30):
-        print(f"⏳ Esperando variable {signal_id} = True...")
+    def wait_for_finish_signal(self, signal_base="isfinish"):
+        variable_name = f"{signal_base}{self.robot_id}" 
+        print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
+
         start = time.time()
-        print("-->")
-        signal_value = self.controller.get_global_signal(signal_id)
-        print("-->" + str(signal_value))
-        while time.time() - start < timeout:
+        while time.time() - start < self.wait_timeout:
             self.controller.wait_for_status_update(timeout=1)
-            ##signal_value = self.controller.robot_state.global_signals.__getstate__ sget(signal_id, False)
-            
-            # if signal_value:
-            #     print(f"✅ Señal global {signal_id} detectada. Secuencia finalizada.")
-            #     return
+            try:
+                value = int(self.controller.robot_state.variabels.get(variable_name, 0))
+                print(f"🔎 {variable_name} = {value}")
+                if value == 1:
+                    print(f"✅ Señal '{variable_name}' detectada.")
+                    return
+            except Exception as e:
+                print(f"⚠️ Error al leer variable '{variable_name}': {e}")
+            time.sleep(0.5)
 
-            # time.sleep(0.5)
-        print("-->")
-        signal_value = self.controller.get_global_signal(signal_id)
-        print("-->" + str(signal_value))
-        raise TimeoutError(f"❌ Señal global {signal_id} no detectada dentro del tiempo.")
-
-
-
+        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
+        
     def run(self):
         try:
             print(f"🔌 Conectando a {self.ip}:{self.port}")
             if not self.controller.connect(self.ip, self.port):
                 raise Exception("❌ No se pudo conectar al robot.")
 
-            print("♻️ Reiniciando robot...")
+            print("♻️ Reiniciando robot... asegurese que de eres el único que se encuentra conectado....")
             self.controller.reset()
 
             print("🔓 Activando control remoto...")

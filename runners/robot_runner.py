@@ -1,17 +1,21 @@
-from config.robots_config import robots
 from controllers.igus_controller import IgusRobot
+from config import robots_config
 
-def run_robot(robot_id):
-    if robot_id not in robots:
-        raise ValueError(f"Robot '{robot_id}' no está definido.")
+def run_robot(robot_name: str) -> IgusRobot:
+    if robot_name not in robots_config.robots:
+        raise ValueError(f"Robot '{robot_name}' no está definido en config.py")
 
-    config = robots[robot_id]
+    cfg = robots_config.robots[robot_name]
 
     robot = IgusRobot(
-        ip=config["ip"],
-        port=config["port"],
-        program_name=config["program_name"],
-        sequence_path=config["sequence_path"]
+        ip=cfg["ip"],
+        port=cfg["port"],
+        program_name=cfg["program_name"],
+        sequence_path=cfg["sequence_path"],
+        wait_timeout=cfg.get("wait_timeout", 25),
+        robot_id=cfg.get("id", robot_name.lower())
+    
     )
 
     robot.run()
+    return robot
