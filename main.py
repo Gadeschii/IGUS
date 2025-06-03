@@ -4,7 +4,10 @@ from controllers.igus_controller import IgusRobot
 
 if __name__ == "__main__":
     scara = run_robot("Scara")
-    #scara.wait_for_finish_signal()
 
     rebel = run_robot("RebelLine")
-    #rebel.wait_for_finish_signal()
+    
+    rebel1 = run_robot("Rebel1")
+    
+    rebel2 = run_robot("Rebel2")
+   

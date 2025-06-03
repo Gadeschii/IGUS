@@ -12,9 +12,9 @@ def run_robot(robot_name: str) -> IgusRobot:
         port=cfg["port"],
         program_name=cfg["program_name"],
         sequence_path=cfg["sequence_path"],
-        wait_timeout=cfg.get("wait_timeout", 25),
-        robot_id=cfg.get("id", robot_name.lower())
-    
+        wait_timeout=cfg.get("wait_timeout", 30),
+        robot_id=cfg.get("id", robot_name.lower()),
+        var_file=cfg.get("var_file") 
     )
 
     robot.run()
