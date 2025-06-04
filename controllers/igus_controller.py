@@ -55,24 +55,24 @@ class IgusRobot:
             print("✅ Variables cargadas.")
             self.controller.start_programm()
 
-    # def wait_for_finish_signal(self, signal_base="isfinish"):
-    #     variable_name = f"{signal_base}{self.robot_id}" 
-    #     print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
-    #     start = time.time()
-    #     self.controller.robot_state.variabels[variable_name] = 0
-    #     while time.time() - start < self.wait_timeout:
-    #         self.controller.wait_for_status_update(timeout=1)
-    #         try:
-    #             value = int(self.controller.robot_state.variabels[variable_name])
-    #             print(f"🔎 {variable_name} = {value}")
-    #             if value == 1:
-    #                 print(f"✅ Señal '{variable_name}' detectada.")
-    #                 return
-    #         except Exception as e:
-    #             print(f"⚠️ Error al leer variable '{variable_name}': {e}")
-    #         time.sleep(0.5)
+    def wait_for_finish_signal(self, signal_base="isfinish"):
+        variable_name = f"{signal_base}{self.robot_id}" 
+        print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
+        start = time.time()
+        self.controller.robot_state.variabels[variable_name] = 0
+        while time.time() - start < self.wait_timeout:
+            self.controller.wait_for_status_update(timeout=1)
+            try:
+                value = int(self.controller.robot_state.variabels[variable_name])
+                print(f"🔎 {variable_name} = {value}")
+                if value == 1:
+                    print(f"✅ Señal '{variable_name}' detectada.")
+                    return
+            except Exception as e:
+                print(f"⚠️ Error al leer variable '{variable_name}': {e}")
+            time.sleep(0.5)
 
-    #     raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
+        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
         
     def run(self):
         try:
