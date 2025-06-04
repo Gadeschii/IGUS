@@ -18,92 +18,61 @@ class IgusRobot:
     def status_callback(self, state):
         self._last_status = state
     
-    def wait_for_any_variable(self, conditions, timeout=None):
-        """
-        Espera hasta que al menos una variable cumpla su valor esperado.
-        :param conditions: Lista de tuplas (variable_name, expected_value)
-        """
-        timeout = timeout or self.wait_timeout
-        print("⏳ Esperando a que se cumpla al menos una condición:")
+    def get_variable_value(self, variable_name):
+        try:
+            return self.controller.robot_state.variabels.get(variable_name)
+        except Exception:
+            return None
 
-        for var, val in conditions:
-            print(f"    • {var} == {val}")
-
-        for _ in range(timeout):
-            for variable_name, expected_value in conditions:
-                value = self.controller.robot_state.variabels.get(variable_name, None)
-                print(f"🔍 {variable_name} = {value}")
+    def wait_for_variable_condition(self, conditions, timeout=30, interval=1):
+        print("⏳ Esperando condiciones...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            for var_name, expected_value in conditions:
+                value = self.get_variable_value(var_name)
+                print(f"🔍 {var_name} = {value}")
                 if value == expected_value:
-                    print(f"✅ Condición cumplida: {variable_name} == {expected_value}")
                     return True
-            time.sleep(1)
-
+            time.sleep(interval)
         raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
 
-    def wait_for_external_variable(self, variable_name, expected_value=1, timeout=None):
-        timeout = timeout or self.wait_timeout
-        print(f"⏳ Esperando que la variable externa '{variable_name}' sea {expected_value}...")
+    def wait_for_external_variable(self, robot, conditions, timeout=30, interval=1):
+        print(f"⏳ Esperando que la variable externa '{conditions}' sea 1...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            for var_name, expected_value in conditions:
+                value = self.controller.robot_state.variabels[var_name]
+                print(f"🔍 {var_name} = {value}")
+                if value == expected_value:
+                    return True
+            time.sleep(interval)
+        raise TimeoutError("❌ Timeout: la condición externa no se cumplió.")
 
-        for _ in range(timeout):
-            value = self.controller.robot_state.variabels.get(variable_name, None)
-            print(f"🔎 {variable_name} = {value}")
-            if value == expected_value:
-                print(f"✅ Señal externa '{variable_name}' detectada.")
-                return True
-            time.sleep(1)
-
-        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió {expected_value} en {timeout} segundos.")
-   
-    def wait_for_any_external_variable(self, conditions, timeout=None):
-        """
-        Espera a que al menos una de las variables externas cumpla su valor esperado.
-        conditions: lista de tuplas [(nombre_variable, valor_esperado), ...]
-        """
-        timeout = timeout or self.wait_timeout
-        print("⏳ Esperando a que se cumpla al menos una condición externa:")
-        for name, val in conditions:
-            print(f"    • {name} == {val}")
-
-        for _ in range(timeout):
-            for name, val in conditions:
-                current = self.controller.robot_state.variabels.get(name, None)
-                print(f"🔍 {name} = {current}")
-                if current == val:
-                    print(f"✅ Condición cumplida: {name} == {val}")
-                    return name
-            time.sleep(1)
-
-        raise TimeoutError("❌ Timeout: ninguna condición externa se cumplió en el tiempo límite.")
-
-        
-    def wait_for_variable(self, variable_name, expected_value=1, timeout=None):
-        timeout = timeout or self.wait_timeout
-        print(f"⏳ Esperando que la variable '{variable_name}' sea {expected_value}...")
-
-        for i in range(timeout):
-            value = self.controller.robot_state.variabels.get(variable_name, 0)
-            print(f"🔎 {variable_name} = {value}")
-            if value == expected_value:
-                print(f"✅ Señal '{variable_name}' detectada.")
-                return True
-            time.sleep(1)
-
-        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió {expected_value} en {timeout} segundos.")
-     
-    def wait_until_variable_is_not(self, variable_name, blocked_value, timeout=None):
-        timeout = timeout or self.wait_timeout
-        print(f"⛔ Esperando a que la variable '{variable_name}' deje de ser {blocked_value}...")
-
-        for i in range(timeout):
-            value = self.controller.robot_state.variabels.get(variable_name, blocked_value)
-            print(f"🔍 {variable_name} = {value}")
-            if value != blocked_value:
-                print(f"✅ '{variable_name}' ya no es {blocked_value}.")
-                return True
-            time.sleep(1)
-
-        raise TimeoutError(f"❌ Timeout: '{variable_name}' sigue siendo {blocked_value} después de {timeout} segundos.")
+    def set_start_signal(self):
+        var_name = f"start{self.robot_id.lower()}"
+        print(f"🚦 Activando señal: {var_name} = 1")
+        self.controller.robot_state.variabels[var_name] = 1
     
+    def connect_only(self):
+        print(f"🔌 (Preconexión) Conectando a {self.ip}:{self.port}")
+        if not self.controller.connect(self.ip, self.port):
+            raise Exception(f"❌ No se pudo conectar a {self.robot_id}")
+
+        self.controller.reset()
+        self.controller.set_active_control(True)
+        self.controller.enable()
+        self.controller.wait_for_kinematics_ready(timeout=30)
+
+    def load_variables(self):
+        if self.var_file:
+            print(f"📤 (Precarga) Subiendo archivo de variables: {self.var_file}")
+            if not self.controller.upload_file(self.var_file, self.remote_folder):
+                raise Exception("❌ Fallo al subir archivo de variables.")
+            if not self.controller.load_programm(self.var_file):
+                raise Exception("❌ Fallo al cargar archivo de variables.")
+            print("✅ Variables cargadas.")
+            self.controller.start_programm()
+
 
     # def wait_for_finish_signal(self, signal_base="isfinish"):
     #     variable_name = f"{signal_base}{self.robot_id}" 
@@ -149,6 +118,13 @@ class IgusRobot:
             if not self.controller.wait_for_kinematics_ready(timeout=30):
                 raise Exception("❌ El robot no está listo para moverse.")
 
+            # Esperar condiciones específicas antes de iniciar la secuencia
+            if self.robot_id.upper() == "SCARA":
+                print("⏳ Esperando condiciones en REBELLINE...")
+                conditions = [("startrebelline", 1), ("isfinishrebelline", 1), ("posdropobjrebelline", 1)]
+                if not self.wait_for_variable_condition(conditions, timeout=30):
+                    raise Exception("❌ Timeout: condiciones en REBELLINE no se cumplieron.")
+
             # 👉 PASO 1: Variables == 0
             if self.var_file:
                 print(f"📤 Subiendo archivo de variables: {self.var_file}")
@@ -175,7 +151,11 @@ class IgusRobot:
             if not self.controller.start_programm():
                 raise Exception("❌ Error al iniciar el programa.")
 
-            self.wait_for_variable(f"isfinish{self.robot_id}")
+            # Esperar a que la secuencia termine
+            print(f"⏳ Esperando que la variable 'isfinish{self.robot_id.lower()}' sea 1...")
+            finish_variable = f"isfinish{self.robot_id.lower()}"
+            if not self.controller.wait_for_variable_condition([(finish_variable, 1)], timeout=30):
+                raise Exception(f"❌ Timeout: '{finish_variable}' no se volvió 1 en 30 segundos.")
 
             print(f"✅ Secuencia completada para: {self.robot_id.upper()}")
 
@@ -186,4 +166,5 @@ class IgusRobot:
             print(f"🛑 Cerrando conexión con {self.robot_id.upper()}")
             self.controller.close()
             print(f"{'-'*30}")
+
 

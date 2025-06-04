@@ -1,25 +1,37 @@
 from runners.robot_runner import run_robot
-from controllers.igus_controller import IgusRobot
 
 if __name__ == "__main__":
-    # 1. Conectar y preparar TODOS los robots
-    
+    # Crear instancias
     scara = run_robot("Scara")
     rebelline = run_robot("RebelLine")
 
-    # 2. Esperar que alguna condición se cumpla para que Scara empiece
-    scara.wait_for_any_external_variable
-    ([
-        ("startrebelline", 1),
-        ("isfinishrebelline", 1),
-        ("posdropobjrebelline", 1)
-    ])
-    scara.set_start_signal()
+    # 🔌 Conectar primero Rebelline y cargar variables
+    rebelline.connect_only()  # Este método lo añadiremos ahora
+    rebelline.load_variables()
 
-    # 4. Esperar que Scara deje objeto para que Rebelline empiece
-    rebelline.wait_for_external_variable([
-        ("isfinishscara", 1),
-        ("posdropobjscara", 1)
-    ])
+    # 🕒 Esperar que Rebelline esté en una condición válida
+    scara.wait_for_external_variable(
+        rebelline,
+        [
+            ('startrebelline', 1),
+            ('isfinishrebelline', 1),
+            ('posdropobjrebelline', 1)
+        ]
+    )
+
+    # 🚦 Lanzar SCARA
+    scara.set_start_signal()
+    scara.run()
+
+    # 🕒 Ahora esperar condiciones de SCARA desde Rebelline
+    rebelline.wait_for_external_variable(
+        scara,
+        [
+            ('isfinishscara', 1),
+            ('posdropobjscara', 1)
+        ]
+    )
+
+    # 🚦 Lanzar Rebelline
     rebelline.set_start_signal()
-    rebelline.wait_for_variable("isfinishrebelline")
+    rebelline.run()
