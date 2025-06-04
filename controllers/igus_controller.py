@@ -48,20 +48,39 @@ class IgusRobot:
             time.sleep(interval)
         raise TimeoutError("❌ Timeout: la condición externa no se cumplió.")
 
+    def wait_for_rebelline_conditions(rebelline_controller, timeout=30):
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            start = rebelline_controller.controller.robot_state.variabels('startrebelline')
+            finish = rebelline_controller.controller.robot_state.variabels('isfinishrebelline')
+            drop = rebelline_controller.controller.robot_state.variabels('posdropobjrebelline')
+            if start == 1 or finish == 1 or drop == 1:
+                return True
+            time.sleep(0.5)
+        raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
+
+    def wait_for_external_variable(self, conditions, timeout=30):
+        """
+        Espera a que se cumpla alguna de las condiciones especificadas en otro robot.
+        conditions: lista de tuplas (variable_name, expected_value)
+        controller: instancia del robot del que se leen las variables
+        """
+        print("⏳ Esperando condiciones...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            for var_name, expected_value in conditions:
+                value = self.controller.robot_state.variabels(var_name, None)
+                print(f"🔍 {var_name} = {value}")
+                if value == expected_value:
+                    return True
+            time.sleep(0.5)
+        raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
+
+    
     def set_start_signal(self):
         var_name = f"start{self.robot_id.lower()}"
         print(f"🚦 Activando señal: {var_name} = 1")
         self.controller.robot_state.variabels[var_name] = 1
-    
-    def connect_only(self):
-        print(f"🔌 (Preconexión) Conectando a {self.ip}:{self.port}")
-        if not self.controller.connect(self.ip, self.port):
-            raise Exception(f"❌ No se pudo conectar a {self.robot_id}")
-
-        self.controller.reset()
-        self.controller.set_active_control(True)
-        self.controller.enable()
-        self.controller.wait_for_kinematics_ready(timeout=30)
 
     def load_variables(self):
         if self.var_file:
@@ -72,7 +91,6 @@ class IgusRobot:
                 raise Exception("❌ Fallo al cargar archivo de variables.")
             print("✅ Variables cargadas.")
             self.controller.start_programm()
-
 
     # def wait_for_finish_signal(self, signal_base="isfinish"):
     #     variable_name = f"{signal_base}{self.robot_id}" 
@@ -154,7 +172,7 @@ class IgusRobot:
             # Esperar a que la secuencia termine
             print(f"⏳ Esperando que la variable 'isfinish{self.robot_id.lower()}' sea 1...")
             finish_variable = f"isfinish{self.robot_id.lower()}"
-            if not self.controller.wait_for_variable_condition([(finish_variable, 1)], timeout=30):
+            if not self.wait_for_variable_condition([(finish_variable, 1)], timeout=30):
                 raise Exception(f"❌ Timeout: '{finish_variable}' no se volvió 1 en 30 segundos.")
 
             print(f"✅ Secuencia completada para: {self.robot_id.upper()}")

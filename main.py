@@ -6,18 +6,7 @@ if __name__ == "__main__":
     rebelline = run_robot("RebelLine")
 
     # 🔌 Conectar primero Rebelline y cargar variables
-    rebelline.connect_only()  # Este método lo añadiremos ahora
     rebelline.load_variables()
-
-    # 🕒 Esperar que Rebelline esté en una condición válida
-    scara.wait_for_external_variable(
-        rebelline,
-        [
-            ('startrebelline', 1),
-            ('isfinishrebelline', 1),
-            ('posdropobjrebelline', 1)
-        ]
-    )
 
     # 🚦 Lanzar SCARA
     scara.set_start_signal()
