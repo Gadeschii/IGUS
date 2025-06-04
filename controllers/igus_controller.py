@@ -17,62 +17,22 @@ class IgusRobot:
 
     def status_callback(self, state):
         self._last_status = state
-    
-    def get_variable_value(self, variable_name):
-        try:
-            return self.controller.robot_state.variabels.get(variable_name)
-        except Exception:
-            return None
 
-    def wait_for_variable_condition(self, conditions, timeout=30, interval=1):
-        print("⏳ Esperando condiciones...")
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            for var_name, expected_value in conditions:
-                value = self.get_variable_value(var_name)
-                print(f"🔍 {var_name} = {value}")
-                if value == expected_value:
-                    return True
-            time.sleep(interval)
-        raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
-
-    def wait_for_external_variable(self, robot, conditions, timeout=30, interval=1):
-        print(f"⏳ Esperando que la variable externa '{conditions}' sea 1...")
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            for var_name, expected_value in conditions:
-                value = self.controller.robot_state.variabels[var_name]
-                print(f"🔍 {var_name} = {value}")
-                if value == expected_value:
-                    return True
-            time.sleep(interval)
-        raise TimeoutError("❌ Timeout: la condición externa no se cumplió.")
-
-    def wait_for_rebelline_conditions(rebelline_controller, timeout=30):
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            start = rebelline_controller.controller.robot_state.variabels('startrebelline')
-            finish = rebelline_controller.controller.robot_state.variabels('isfinishrebelline')
-            drop = rebelline_controller.controller.robot_state.variabels('posdropobjrebelline')
-            if start == 1 or finish == 1 or drop == 1:
-                return True
-            time.sleep(0.5)
-        raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
-
-    def wait_for_external_variable(self, conditions, timeout=30):
-        """
-        Espera a que se cumpla alguna de las condiciones especificadas en otro robot.
-        conditions: lista de tuplas (variable_name, expected_value)
-        controller: instancia del robot del que se leen las variables
-        """
-        print("⏳ Esperando condiciones...")
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            for var_name, expected_value in conditions:
-                value = self.controller.robot_state.variabels(var_name, None)
-                print(f"🔍 {var_name} = {value}")
-                if value == expected_value:
-                    return True
+    def wait_for_finish_signal(self, signal_base="isfinish"):
+        variable_name = f"{signal_base}{self.robot_id}" 
+        print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
+        start = time.time()
+        self.controller.robot_state.variabels[variable_name] = 0
+        while time.time() - start < self.wait_timeout:
+            self.controller.wait_for_status_update(timeout=1)
+            try:
+                value = int(self.controller.robot_state.variabels[variable_name])
+                print(f"🔎 {variable_name} = {value}")
+                if value == 1:
+                    print(f"✅ Señal '{variable_name}' detectada.")
+                    return
+            except Exception as e:
+                print(f"⚠️ Error al leer variable '{variable_name}': {e}")
             time.sleep(0.5)
         raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
 
@@ -152,10 +112,6 @@ class IgusRobot:
                 if not self.controller.load_programm(self.var_file):
                     raise Exception("❌ Fallo al cargar el archivo de variables.")
                 print("✅ Variables inicializadas correctamente.")
-                
-                print("▶️ Iniciando programa...")
-                if not self.controller.start_programm():
-                    raise Exception("❌ Error al iniciar el programa.")
 
             # 👉 PASO 2: Movimiento
             print(f"📤 Subiendo archivo de secuencia: {self.sequence_path}")
