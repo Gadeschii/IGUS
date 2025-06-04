@@ -26,9 +26,6 @@ class IgusRobot:
         while time.time() - start < self.wait_timeout:
             self.controller.wait_for_status_update(timeout=1)
             try:
-                value = 0
-                
-                print(f"🔎 {variable_name} = {value}")
                 value = int(self.controller.robot_state.variabels[variable_name])
                 print(f"🔎 {variable_name} = {value}")
                 if value == 1:
@@ -74,6 +71,10 @@ class IgusRobot:
                 if not self.controller.load_programm(self.var_file):
                     raise Exception("❌ Fallo al cargar el archivo de variables.")
                 print("✅ Variables inicializadas correctamente.")
+                
+                print("▶️ Iniciando programa...")
+                if not self.controller.start_programm():
+                    raise Exception("❌ Error al iniciar el programa.")
 
             # 👉 PASO 2: Movimiento
             print(f"📤 Subiendo archivo de secuencia: {self.sequence_path}")
