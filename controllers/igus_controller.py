@@ -17,25 +17,112 @@ class IgusRobot:
 
     def status_callback(self, state):
         self._last_status = state
+    
+    def wait_for_any_variable(self, conditions, timeout=None):
+        """
+        Espera hasta que al menos una variable cumpla su valor esperado.
+        :param conditions: Lista de tuplas (variable_name, expected_value)
+        """
+        timeout = timeout or self.wait_timeout
+        print("⏳ Esperando a que se cumpla al menos una condición:")
 
-    def wait_for_finish_signal(self, signal_base="isfinish"):
-        variable_name = f"{signal_base}{self.robot_id}" 
-        print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
-        start = time.time()
-        self.controller.robot_state.variabels[variable_name] = 0
-        while time.time() - start < self.wait_timeout:
-            self.controller.wait_for_status_update(timeout=1)
-            try:
-                value = int(self.controller.robot_state.variabels[variable_name])
-                print(f"🔎 {variable_name} = {value}")
-                if value == 1:
-                    print(f"✅ Señal '{variable_name}' detectada.")
-                    return
-            except Exception as e:
-                print(f"⚠️ Error al leer variable '{variable_name}': {e}")
-            time.sleep(0.5)
+        for var, val in conditions:
+            print(f"    • {var} == {val}")
 
-        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
+        for _ in range(timeout):
+            for variable_name, expected_value in conditions:
+                value = self.controller.robot_state.variabels.get(variable_name, None)
+                print(f"🔍 {variable_name} = {value}")
+                if value == expected_value:
+                    print(f"✅ Condición cumplida: {variable_name} == {expected_value}")
+                    return True
+            time.sleep(1)
+
+        raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
+
+    def wait_for_external_variable(self, variable_name, expected_value=1, timeout=None):
+        timeout = timeout or self.wait_timeout
+        print(f"⏳ Esperando que la variable externa '{variable_name}' sea {expected_value}...")
+
+        for _ in range(timeout):
+            value = self.controller.robot_state.variabels.get(variable_name, None)
+            print(f"🔎 {variable_name} = {value}")
+            if value == expected_value:
+                print(f"✅ Señal externa '{variable_name}' detectada.")
+                return True
+            time.sleep(1)
+
+        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió {expected_value} en {timeout} segundos.")
+   
+    def wait_for_any_external_variable(self, conditions, timeout=None):
+        """
+        Espera a que al menos una de las variables externas cumpla su valor esperado.
+        conditions: lista de tuplas [(nombre_variable, valor_esperado), ...]
+        """
+        timeout = timeout or self.wait_timeout
+        print("⏳ Esperando a que se cumpla al menos una condición externa:")
+        for name, val in conditions:
+            print(f"    • {name} == {val}")
+
+        for _ in range(timeout):
+            for name, val in conditions:
+                current = self.controller.robot_state.variabels.get(name, None)
+                print(f"🔍 {name} = {current}")
+                if current == val:
+                    print(f"✅ Condición cumplida: {name} == {val}")
+                    return name
+            time.sleep(1)
+
+        raise TimeoutError("❌ Timeout: ninguna condición externa se cumplió en el tiempo límite.")
+
+        
+    def wait_for_variable(self, variable_name, expected_value=1, timeout=None):
+        timeout = timeout or self.wait_timeout
+        print(f"⏳ Esperando que la variable '{variable_name}' sea {expected_value}...")
+
+        for i in range(timeout):
+            value = self.controller.robot_state.variabels.get(variable_name, 0)
+            print(f"🔎 {variable_name} = {value}")
+            if value == expected_value:
+                print(f"✅ Señal '{variable_name}' detectada.")
+                return True
+            time.sleep(1)
+
+        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió {expected_value} en {timeout} segundos.")
+     
+    def wait_until_variable_is_not(self, variable_name, blocked_value, timeout=None):
+        timeout = timeout or self.wait_timeout
+        print(f"⛔ Esperando a que la variable '{variable_name}' deje de ser {blocked_value}...")
+
+        for i in range(timeout):
+            value = self.controller.robot_state.variabels.get(variable_name, blocked_value)
+            print(f"🔍 {variable_name} = {value}")
+            if value != blocked_value:
+                print(f"✅ '{variable_name}' ya no es {blocked_value}.")
+                return True
+            time.sleep(1)
+
+        raise TimeoutError(f"❌ Timeout: '{variable_name}' sigue siendo {blocked_value} después de {timeout} segundos.")
+    
+
+    # def wait_for_finish_signal(self, signal_base="isfinish"):
+    #     variable_name = f"{signal_base}{self.robot_id}" 
+    #     print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
+    #     start = time.time()
+    #     self.controller.robot_state.variabels[variable_name] = 0
+    #     while time.time() - start < self.wait_timeout:
+    #         self.controller.wait_for_status_update(timeout=1)
+    #         try:
+    #             value = int(self.controller.robot_state.variabels[variable_name])
+    #             print(f"🔎 {variable_name} = {value}")
+    #             if value == 1:
+    #                 print(f"✅ Señal '{variable_name}' detectada.")
+    #                 return
+    #         except Exception as e:
+    #             print(f"⚠️ Error al leer variable '{variable_name}': {e}")
+    #         time.sleep(0.5)
+
+    #     raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
         
     def run(self):
         try:
@@ -88,7 +175,7 @@ class IgusRobot:
             if not self.controller.start_programm():
                 raise Exception("❌ Error al iniciar el programa.")
 
-            self.wait_for_finish_signal()
+            self.wait_for_variable(f"isfinish{self.robot_id}")
 
             print(f"✅ Secuencia completada para: {self.robot_id.upper()}")
 
