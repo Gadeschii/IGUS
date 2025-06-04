@@ -26,6 +26,9 @@ class IgusRobot:
         while time.time() - start < self.wait_timeout:
             self.controller.wait_for_status_update(timeout=1)
             try:
+                value = 0
+                
+                print(f"🔎 {variable_name} = {value}")
                 value = int(self.controller.robot_state.variabels[variable_name])
                 print(f"🔎 {variable_name} = {value}")
                 if value == 1:
