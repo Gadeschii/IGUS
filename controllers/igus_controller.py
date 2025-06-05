@@ -22,44 +22,7 @@ class IgusRobot:
         variable_name = f"{signal_base}{self.robot_id}" 
         print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
         start = time.time()
-        self.controller.robot_state.variabels[variable_name] = 0
-        while time.time() - start < self.wait_timeout:
-            self.controller.wait_for_status_update(timeout=1)
-            try:
-                value = 0
-                
-                print(f"🔎 {variable_name} = {value}")
-                value = int(self.controller.robot_state.variabels[variable_name])
-                print(f"🔎 {variable_name} = {value}")
-                if value == 1:
-                    print(f"✅ Señal '{variable_name}' detectada.")
-                    return
-            except Exception as e:
-                print(f"⚠️ Error al leer variable '{variable_name}': {e}")
-            time.sleep(0.5)
-        raise TimeoutError("❌ Timeout: ninguna condición se cumplió en el tiempo límite.")
-
-    
-    def set_start_signal(self):
-        var_name = f"start{self.robot_id.lower()}"
-        print(f"🚦 Activando señal: {var_name} = 1")
-        self.controller.robot_state.variabels[var_name] = 1
-
-    def load_variables(self):
-        if self.var_file:
-            print(f"📤 (Precarga) Subiendo archivo de variables: {self.var_file}")
-            if not self.controller.upload_file(self.var_file, self.remote_folder):
-                raise Exception("❌ Fallo al subir archivo de variables.")
-            if not self.controller.load_programm(self.var_file):
-                raise Exception("❌ Fallo al cargar archivo de variables.")
-            print("✅ Variables cargadas.")
-            self.controller.start_programm()
-
-    def wait_for_finish_signal(self, signal_base="isfinish"):
-        variable_name = f"{signal_base}{self.robot_id}" 
-        print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
-        start = time.time()
-        self.controller.robot_state.variabels[variable_name] = 0
+        int(self.controller.robot_state.variabels[variable_name]) == 0
         while time.time() - start < self.wait_timeout:
             self.controller.wait_for_status_update(timeout=1)
             try:
@@ -99,13 +62,6 @@ class IgusRobot:
             if not self.controller.wait_for_kinematics_ready(timeout=30):
                 raise Exception("❌ El robot no está listo para moverse.")
 
-            # Esperar condiciones específicas antes de iniciar la secuencia
-            if self.robot_id.upper() == "SCARA":
-                print("⏳ Esperando condiciones en REBELLINE...")
-                conditions = [("startrebelline", 1), ("isfinishrebelline", 1), ("posdropobjrebelline", 1)]
-                if not self.wait_for_variable_condition(conditions, timeout=30):
-                    raise Exception("❌ Timeout: condiciones en REBELLINE no se cumplieron.")
-
             # 👉 PASO 1: Variables == 0
             if self.var_file:
                 print(f"📤 Subiendo archivo de variables: {self.var_file}")
@@ -115,6 +71,10 @@ class IgusRobot:
                 if not self.controller.load_programm(self.var_file):
                     raise Exception("❌ Fallo al cargar el archivo de variables.")
                 print("✅ Variables inicializadas correctamente.")
+                
+                print("▶️ Iniciando programa...")
+                if not self.controller.start_programm():
+                    raise Exception("❌ Error al iniciar el programa.")
 
             # 👉 PASO 2: Movimiento
             print(f"📤 Subiendo archivo de secuencia: {self.sequence_path}")
@@ -128,11 +88,7 @@ class IgusRobot:
             if not self.controller.start_programm():
                 raise Exception("❌ Error al iniciar el programa.")
 
-            # Esperar a que la secuencia termine
-            print(f"⏳ Esperando que la variable 'isfinish{self.robot_id.lower()}' sea 1...")
-            finish_variable = f"isfinish{self.robot_id.lower()}"
-            if not self.wait_for_variable_condition([(finish_variable, 1)], timeout=30):
-                raise Exception(f"❌ Timeout: '{finish_variable}' no se volvió 1 en 30 segundos.")
+            self.wait_for_finish_signal()
 
             print(f"✅ Secuencia completada para: {self.robot_id.upper()}")
 
@@ -143,5 +99,4 @@ class IgusRobot:
             print(f"🛑 Cerrando conexión con {self.robot_id.upper()}")
             self.controller.close()
             print(f"{'-'*30}")
-
 
