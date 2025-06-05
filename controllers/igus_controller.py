@@ -20,15 +20,17 @@ class IgusRobot:
 
     def wait_for_finish_signal(self, signal_base="isfinish"):
         variable_name = f"{signal_base}{self.robot_id}" 
-        print(f"⏳ Esperando que la variable '{variable_name}' sea 1...")
+        print(f"⏳ Esperando que la variable '{variable_name}' sea 1.0...")
+        print (self.controller.robot_state.variabels)
+        print
         start = time.time()
-        int(self.controller.robot_state.variabels[variable_name]) == 0
         while time.time() - start < self.wait_timeout:
             self.controller.wait_for_status_update(timeout=1)
             try:
-                value = int(self.controller.robot_state.variabels[variable_name])
+                value = float(self.controller.robot_state.variabels[variable_name])
                 print(f"🔎 {variable_name} = {value}")
-                if value == 1:
+                print (f"{self.controller.robot_state.variabels}")
+                if value == 1.0:
                     print(f"✅ Señal '{variable_name}' detectada.")
                     return
             except Exception as e:
