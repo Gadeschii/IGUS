@@ -1,25 +1,45 @@
-from runners.robot_runner import run_robot
-from controllers.variable_monitor import VariableMonitor
 from config.robots_config import robots
 from config.conditions import robot_start_conditions
-import time
+from controllers.igus_controller import IgusRobot
+from controllers.variable_monitor import VariableMonitor
+from time import sleep
 
 def main():
-    monitor = VariableMonitor(robots)
-    launched = set()
+    robot_instances = {}
 
-    while len(launched) < len(robots):
-        monitor.update_variables()
-        vars_now = monitor.get_all()
+    print("\n🔧 INICIALIZANDO TODOS LOS ROBOTS...\n")
+    for name, config in robots.items():
+        try:
+            robot = IgusRobot(
+                ip=config["ip"],
+                port=config["port"],
+                program_name=config["program_name"],
+                sequence_path=config["sequence_path"],
+                robot_id=config["id"],
+                var_file=config.get("var_file")
+            )
+            robot.prepare()
+            robot_instances[name] = robot
+        except Exception as e:
+            print(f"❌ Error inicializando {name.upper()}: {e}")
 
-        for robot_name in robots:
-            if robot_name not in launched:
-                condition = robot_start_conditions.get(robot_name, lambda _: False)
-                if condition(vars_now):
-                    print(f"🚀 Iniciando {robot_name}")
-                    run_robot(robot_name)
-                    launched.add(robot_name)
-        time.sleep(1)
+    # print("\n🕹️  ESPERANDO CONDICIONES PARA INICIAR SECUENCIAS...\n")
+    # launched = set()
+    # monitor = VariableMonitor(robots)
+
+    # while len(launched) < len(robot_instances):
+    #     monitor.update_variables()
+    #     current_vars = monitor.get_all()
+
+    #     for name, robot in robot_instances.items():
+    #         if name not in launched:
+    #             condition_fn = robot_start_conditions.get(name, lambda vars: False)
+    #             if condition_fn(current_vars):
+    #                 print(f"🚀 Lanzando secuencia para {name.upper()}")
+    #                 robot.run_sequence()
+    #                 launched.add(name)
+
+    #     sleep(1)
 
 if __name__ == "__main__":
     main()
