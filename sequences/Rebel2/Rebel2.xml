@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Program>
     <Header RobotName="igus REBEL-6DOF" RobotType="REBEL-6DOF-01" GripperType="" Software="iRC V902-14-003" VelocitySetting="0" />
     <Store Nr="1" Type="number" Value="0" Name="startrebel2" Descr="" />
