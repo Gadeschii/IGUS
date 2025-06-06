@@ -40,22 +40,22 @@ class IgusRobot:
         raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
     
     
-    def _wait_for_axis_referenced(self, joint_name="A1", target_value=469.0, timeout=30):
-        print(f"⏳ Esperando a que el eje {joint_name} llegue a {target_value} para considerarlo referenciado...")
-        start = time.time()
-        while time.time() - start < timeout:
-            self.controller.wait_for_status_update(timeout=1)
-            try:
-                joint_value = getattr(self.controller.robot_state.variabels['#position'], joint_name)
-                print(f"🔍 {joint_name} = {joint_value}")
-                if joint_value >= target_value:
-                    print(f"✅ Eje {joint_name} referenciado correctamente.")  
-                    return True
-            except Exception as e:
-                print(f"⚠️ Error al leer {joint_name}: {e}")
-            time.sleep(0.5)
+    # def _wait_for_axis_referenced(self, joint_name="A1", target_value=469.0, timeout=30):
+    #     print(f"⏳ Esperando a que el eje {joint_name} llegue a {target_value} para considerarlo referenciado...")
+    #     start = time.time()
+    #     while time.time() - start < timeout:
+    #         self.controller.wait_for_status_update(timeout=1)
+    #         try:
+    #             joint_value = getattr(self.controller.robot_state.variabels['#position'], joint_name)
+    #             print(f"🔍 {joint_name} = {joint_value}")
+    #             if joint_value >= target_value:
+    #                 print(f"✅ Eje {joint_name} referenciado correctamente.")  
+    #                 return True
+    #         except Exception as e:
+    #             print(f"⚠️ Error al leer {joint_name}: {e}")
+    #         time.sleep(0.5)
 
-        raise TimeoutError(f"❌ Timeout: El eje {joint_name} no alcanzó el valor {target_value} en {timeout} segundos.")
+    #     raise TimeoutError(f"❌ Timeout: El eje {joint_name} no alcanzó el valor {target_value} en {timeout} segundos.")
 
     def wait_until_axes_referenced(self, timeout=30, axes=("A1", "A2", "A3","A4", "A5", "A6","E1")) -> bool:
                     print(f"⏳ Esperando a que los ejes {axes} estén referenciados...")
@@ -92,39 +92,28 @@ class IgusRobot:
             if self.robot_id == "scara":
                 print("🔧 Referenciando SCARA: primero A1...")
                 time.sleep(0.5)
-                self.controller.reference_single_joint('A1')
+                #self.controller.reference_single_joint('A1')
                 
                 print(f"📋 Resultado de reference_single_joint('A1'): {success}")
                 
+                time.sleep(0.5)
                 if not self.controller.reference_single_joint('A1'):
                     raise Exception("❌ Fallo al referenciar A1 en SCARA.")
                 
-                print(self.controller.robot_state.referencing_state)
                 
-                self.wait_until_axes_referenced(axes=("A1", "A2", "A3","A4", "A5", "A6","E1"))
+                #print(self.controller.robot_state.referencing_state)
+                # print(self.controller.answer_events.get("info_referencing"))  
+                # self._wait_for_axis_referenced(joint_name='A1', target_value=469.0)
 
-
-
-                # status = self.controller.get_joint_referencing_status()
-                # if status.get("A1") and status.get("A2") and status.get("A3"):
-                #     print("✅ Todos los ejes están referenciados.")
-                # else:
-                #     print("🔧 Algunos ejes no están referenciados.")
-
-                time.sleep(0.1)
-                
-                print(self.controller.answer_events.get("info_referencing"))
-                
-                self._wait_for_axis_referenced(joint_name='A1', target_value=469.0)
-
-                print("✅ A1 referenciado. Referenciando el resto de ejes...")
+               
                 if not self.controller.reference_all_joints():
                     raise Exception("❌ Fallo al referenciar el resto de ejes en SCARA.")
+                time.sleep(0.2)
                 
-                 
-                
+                self.wait_until_axes_referenced(axes=("A1", "A2", "A3","A4"))
+                time.sleep(0.2)
+           
                 print("🕹️ Moviendo ejes a posición segura...")
-                time.sleep(0.5)
                 success = self.controller.move_joints(
                     A1=460.0,
                     A2=-74.3,

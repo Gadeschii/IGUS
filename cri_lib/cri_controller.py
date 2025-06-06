@@ -523,6 +523,7 @@ class CRIController:
             `True` if request was successful
             `False` if request was not successful
         """
+        
         if (
             joint[0] == "A" or joint[0] == "E" or joint[0] == "T" or joint[0] == "P"
         ) and (int(joint[1]) > 0):
@@ -535,7 +536,7 @@ class CRIController:
             msg_id := self._send_command(f"CMD ReferenceSingleJoint {joint_msg}", True)
         ) is not None:
             if (
-                error_msg := self._wait_for_answer(f"{msg_id}", timeout=30.0)
+                error_msg := self._wait_for_answer(f"{msg_id}", timeout=120.0)
             ) is not None:
                 logger.debug("Error in ReferenceSingleJoint command: %s", error_msg)
                 return False
@@ -543,6 +544,7 @@ class CRIController:
                 return True
         else:
             return False
+        
 
     def are_all_axes_referenced(self, axes=("A1", "A2", "A3","A4", "A5", "A6","E1")) -> bool:
         """
