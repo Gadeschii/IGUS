@@ -536,7 +536,7 @@ class CRIController:
             msg_id := self._send_command(f"CMD ReferenceSingleJoint {joint_msg}", True)
         ) is not None:
             if (
-                error_msg := self._wait_for_answer(f"{msg_id}", timeout=120.0)
+                error_msg := self._wait_for_answer(f"{msg_id}", timeout=30.0)
             ) is not None:
                 logger.debug("Error in ReferenceSingleJoint command: %s", error_msg)
                 return False

@@ -57,14 +57,69 @@ class IgusRobot:
 
     #     raise TimeoutError(f"❌ Timeout: El eje {joint_name} no alcanzó el valor {target_value} en {timeout} segundos.")
 
-    def wait_until_axes_referenced(self, timeout=30, axes=("A1", "A2", "A3","A4", "A5", "A6","E1")) -> bool:
+    def wait_until_axes_referenced(self, timeout=120, axes=("A1", "A2", "A3","A4", "A5", "A6","E1")) -> bool:
                     print(f"⏳ Esperando a que los ejes {axes} estén referenciados...")
                     start = time.time()
                     while time.time() - start < timeout:
                         if self.controller.are_all_axes_referenced(axes):
+                            print("♻️Segundo Reinicio...")
+                            self.controller.reset()
+                            
+                            print("🔓 Activando control remoto...")
+                            if not self.controller.set_active_control(True):
+                                raise Exception("❌ No se pudo activar el control remoto.")
+
+                            print("⚡ Habilitando robot...")
+                            if not self.controller.enable():
+                                raise Exception("❌ No se pudo habilitar el robot.")
+                                            
                             return True
                         time.sleep(1)
                     raise TimeoutError(f"❌ Timeout: Los ejes {axes} no se referenciaron a tiempo.")
+
+    def move_to_safe_position_scara(self):
+        """
+        Mueve el robot SCARA a una posición segura predefinida.
+        Lanza excepción si el movimiento falla por cualquier razón.
+        """
+        print("🕹️ Moviendo ejes a posición segura...")
+        time.sleep(5)
+        # ⚠️ Verifica que el robot esté habilitado y listo para moverse
+        if not self.controller.robot_state.active_control:
+            raise Exception("❌ El control remoto no está activo.")
+        
+        if not self.controller.robot_state.main_relay:
+            raise Exception("❌ El relé principal no está habilitado.")
+
+        # if self.controller.robot_state.kinematics_state != 0:  # 2 = Kinematics Ready
+        #     print(self.controller.robot_state.kinematics_state)
+        #     raise Exception("❌ La cinemática no está lista para moverse.")
+
+        # ❗ Verifica errores activos por eje
+        for i, err in enumerate(self.controller.robot_state.error_states):
+            if any([getattr(err, attr) for attr in vars(err)]):  # Si algún bit está activo
+                raise Exception(f"❌ Error activo en el eje {i}: {err}")
+
+        # 🚀 Intenta mover el robot
+        success = self.controller.move_joints(
+            A1=460.0,
+            A2=-74.3,
+            A3=70.0,
+            A4=80.0,
+            A5=0.0,
+            A6=0.0,
+            E1=0.0,
+            E2=0.0,
+            E3=0.0,
+            velocity=30.0,
+            wait_move_finished=True
+        )
+
+        if not success:
+            raise Exception("❌ Fallo al mover a posición segura.")
+        
+        print("✅ Robot posicionado correctamente.")
+
 
     
     def prepare(self):
@@ -88,6 +143,10 @@ class IgusRobot:
             if not self.controller.enable():
                 raise Exception("❌ No se pudo habilitar el robot.")
             
+            print("✅ Esperando a que el robot esté listo...")
+            if not self.controller.wait_for_kinematics_ready(timeout=30):
+                raise Exception("❌ El robot no está listo tras el referenciado.")
+            
             success = True
             if self.robot_id == "scara":
                 print("🔧 Referenciando SCARA: primero A1...")
@@ -110,29 +169,15 @@ class IgusRobot:
                     raise Exception("❌ Fallo al referenciar el resto de ejes en SCARA.")
                 time.sleep(0.2)
                 
-                self.wait_until_axes_referenced(axes=("A1", "A2", "A3","A4"))
-                time.sleep(0.2)
-           
-                print("🕹️ Moviendo ejes a posición segura...")
-                success = self.controller.move_joints(
-                    A1=460.0,
-                    A2=-74.3,
-                    A3=70.0,
-                    A4=80.0,
-                    A5=0.0,
-                    A6=0.0,
-                    E1=0.0,
-                    E2=0.0,
-                    E3=0.0,
-                    velocity=30.0,
-                    wait_move_finished = True  
-                )
+                self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4"))
+                time.sleep(1)
+                self.controller.reset()
+                time.sleep(0.5)
+                self.controller.enable()
+                time.sleep(0.5)
+                self.move_to_safe_position_scara()
 
-                if not success:
-                    raise Exception("❌ Fallo al mover a posición segura.")
-                else:
-                    print("✅ Robot posicionado correctamente.")
-                                
+                             
             elif self.robot_id == "rebelline1":
                 print("🔧 Referenciando REBELLINE: primero E1...")
                 time.sleep(0.5)
