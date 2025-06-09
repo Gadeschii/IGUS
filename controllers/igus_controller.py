@@ -18,28 +18,28 @@ class IgusRobot:
     def status_callback(self, state):
         self._last_status = state
 
-    def wait_for_finish_signal(self, signal_base="isfinish"):
-        variable_name = f"{signal_base}{self.robot_id}" 
-        print(f"⏳ Esperando que la variable '{variable_name}' sea 1.0...")
-        print (self.controller.robot_state.variabels)
-        print
-        start = time.time()
-        while time.time() - start < self.wait_timeout:
-            self.controller.wait_for_status_update(timeout=1)
-            try:
-                value = float(self.controller.robot_state.variabels[variable_name])
-                print(f"🔎 {variable_name} = {value}")
-                print (f"{self.controller.robot_state.variabels}")
-                if value == 1.0:
-                    print(f"✅ Señal '{variable_name}' detectada.")
-                    return
-            except Exception as e:
-                print(f"⚠️ Error al leer variable '{variable_name}': {e}")
-            time.sleep(0.5)
+    # def wait_for_finish_signal(self, signal_base="isfinish"):
+    #     variable_name = f"{signal_base}{self.robot_id}"
+    #     print(f"⏳ Esperando que la variable '{variable_name}' sea 1.0...")
+    #     print (self.controller.robot_state.variabels)
+    #     print
+    #     start = time.time()
+    #     while time.time() - start < self.wait_timeout:
+    #         self.controller.wait_for_status_update(timeout=1)
+    #         try:
+    #             value = float(self.controller.robot_state.variabels[variable_name])
+    #             print(f"🔎 {variable_name} = {value}")
+    #             print (f"{self.controller.robot_state.variabels}")
+    #             if value == 1.0:
+    #                 print(f"✅ Señal '{variable_name}' detectada.")
+    #                 return
+    #         except Exception as e:
+    #             print(f"⚠️ Error al leer variable '{variable_name}': {e}")
+    #         time.sleep(0.5)
 
-        raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
-    
-    
+    #     raise TimeoutError(f"❌ Timeout: '{variable_name}' no se volvió 1 en {self.wait_timeout} segundos.")
+
+
     # def _wait_for_axis_referenced(self, joint_name="A1", target_value=469.0, timeout=30):
     #     print(f"⏳ Esperando a que el eje {joint_name} llegue a {target_value} para considerarlo referenciado...")
     #     start = time.time()
@@ -49,7 +49,7 @@ class IgusRobot:
     #             joint_value = getattr(self.controller.robot_state.variabels['#position'], joint_name)
     #             print(f"🔍 {joint_name} = {joint_value}")
     #             if joint_value >= target_value:
-    #                 print(f"✅ Eje {joint_name} referenciado correctamente.")  
+    #                 print(f"✅ Eje {joint_name} referenciado correctamente.")
     #                 return True
     #         except Exception as e:
     #             print(f"⚠️ Error al leer {joint_name}: {e}")
@@ -64,7 +64,7 @@ class IgusRobot:
                         if self.controller.are_all_axes_referenced(axes):
                             print("♻️Segundo Reinicio...")
                             self.controller.reset()
-                            
+
                             print("🔓 Activando control remoto...")
                             if not self.controller.set_active_control(True):
                                 raise Exception("❌ No se pudo activar el control remoto.")
@@ -72,7 +72,7 @@ class IgusRobot:
                             print("⚡ Habilitando robot...")
                             if not self.controller.enable():
                                 raise Exception("❌ No se pudo habilitar el robot.")
-                                            
+
                             return True
                         time.sleep(1)
                     raise TimeoutError(f"❌ Timeout: Los ejes {axes} no se referenciaron a tiempo.")
@@ -87,7 +87,7 @@ class IgusRobot:
         # ⚠️ Verifica que el robot esté habilitado y listo para moverse
         if not self.controller.robot_state.active_control:
             raise Exception("❌ El control remoto no está activo.")
-        
+
         if not self.controller.robot_state.main_relay:
             raise Exception("❌ El relé principal no está habilitado.")
 
@@ -98,7 +98,7 @@ class IgusRobot:
 
         # 🚀 Intenta mover el robot
         success = self.controller.move_joints(
-            A1=460.0,
+            A1=350.0,
             A2=-74.3,
             A3=70.0,
             A4=80.0,
@@ -107,14 +107,14 @@ class IgusRobot:
             E1=0.0,
             E2=0.0,
             E3=0.0,
-            velocity=30.0,
+            velocity=40.0,
             wait_move_finished=True
         )
         if not success:
-            raise Exception("❌ Fallo al mover a posición segura.")   
+            raise Exception("❌ Fallo al mover a posición segura.")
         print("✅ Robot posicionado correctamente.")
-        
-        
+
+
     def move_to_safe_position_rebelLine(self):
         """
         Mueve el robot Rebel Line a una posición segura predefinida.
@@ -125,7 +125,7 @@ class IgusRobot:
         # ⚠️ Verifica que el robot esté habilitado y listo para moverse
         if not self.controller.robot_state.active_control:
             raise Exception("❌ El control remoto no está activo.")
-        
+
         if not self.controller.robot_state.main_relay:
             raise Exception("❌ El relé principal no está habilitado.")
 
@@ -149,17 +149,17 @@ class IgusRobot:
             E1= 734.2,
             E2=0.0,
             E3=0.0,
-            velocity=15.0,
+            velocity=70.0,
             wait_move_finished=True,
             acceleration = 1.0
         )
 
         # if not success:
         #     raise Exception("❌ Fallo al mover a posición segura.")
-        
+
         print("✅ Robot posicionado correctamente.")
 
-    
+
     def prepare(self):
         try:
             print(f"\n{'='*30}")
@@ -180,29 +180,29 @@ class IgusRobot:
             print("⚡ Habilitando robot...")
             if not self.controller.enable():
                 raise Exception("❌ No se pudo habilitar el robot.")
-            
+
             print("✅ Esperando a que el robot esté listo...")
             if not self.controller.wait_for_kinematics_ready(timeout=30):
                 raise Exception("❌ El robot no está listo tras el referenciado.")
-            
+
             success = True
             if self.robot_id == "scara":
                 print("🔧 Referenciando SCARA: primero A1...")
                 time.sleep(0.5)
-                
+
                 #self.controller.reference_single_joint('A1')
                 print(f"📋 Resultado de reference_single_joint('A1'): {success}")
                 time.sleep(0.5)
                 print("Check referenced axis")
                 print(self.controller.are_all_axes_referenced())
                 if self.controller.are_all_axes_referenced(axes=("A1", "A2", "A3","A4")):
-                    
+
                     self.move_to_safe_position_scara()
                 else:
-                    
+
                     if not self.controller.reference_single_joint('A1') :
-                        raise Exception("❌ Fallo al referenciar A1 en SCARA.") 
-                    
+                        raise Exception("❌ Fallo al referenciar A1 en SCARA.")
+
                     # Esperar a que A1 esté referenciado
                     self.wait_until_axes_referenced(axes=("A1",), timeout=200)
 
@@ -218,11 +218,11 @@ class IgusRobot:
                     if not self.controller.reference_all_joints():
                         raise Exception("❌ Fallo al referenciar el resto de ejes en SCARA.")
                     time.sleep(0.2)
-                    
+
                 # print(self.controller.robot_state.referencing_state)
-                # print(self.controller.answer_events.get("info_referencing"))  
+                # print(self.controller.answer_events.get("info_referencing"))
                 # self._wait_for_axis_referenced(joint_name='A1', target_value=469.0)
-               
+
                     self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4")) #si veo qeu el A4 me da problema lo quito
                     time.sleep(1)
                     self.controller.reset()
@@ -230,14 +230,14 @@ class IgusRobot:
                     self.controller.enable()
                     time.sleep(0.5)
                     self.move_to_safe_position_scara()
-                
 
-                             
+
+
             elif self.robot_id == "rebelline":
                 if self.controller.are_all_axes_referenced(axes=("A1", "A2", "A3","A4", "A5", "A6","E1")):
-                    
+
                     self.move_to_safe_position_rebelLine()
-                    
+
                 else:
                     print("🔧 Referenciando REBELLINE: primero E1...")
                     time.sleep(0.5)
@@ -249,12 +249,12 @@ class IgusRobot:
                     # Esperar a que E1 esté referenciado
                     self.wait_until_axes_referenced(axes=("E1",), timeout=200)
                     print("✅ E1 referenciado. Continuando con el resto de ejes...")
-                    
+
                     if not self.controller.reference_all_joints():
                         raise Exception("❌ Fallo al referenciar el resto de ejes en REBELLINE.")
-                    
+
                     time.sleep(0.2)
-                    
+
                     self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4","A5","A6","E1" ))
                     time.sleep(1)
                     self.controller.reset()
@@ -262,7 +262,7 @@ class IgusRobot:
                     self.controller.enable()
                     time.sleep(0.5)
                     self.move_to_safe_position_rebelLine()
-                
+
             else:
                 print("🎯 Referenciando todos los ejes...")
                 if not self.controller.reference_all_joints():
@@ -280,7 +280,7 @@ class IgusRobot:
                 if not self.controller.load_programm(self.var_file):
                     raise Exception("❌ Fallo al cargar el archivo de variables.")
                 print("✅ Variables inicializadas correctamente.")
-                
+
                 print("▶️ Iniciando programa...")
                 if not self.controller.start_programm():
                     raise Exception("❌ Error al iniciar el programa.")
@@ -310,74 +310,74 @@ class IgusRobot:
             if not self.controller.start_programm():
                 raise Exception("❌ Error al iniciar el programa de movimiento.")
 
-            self.wait_for_finish_signal()
-            print(f"✅ Secuencia completada para: {self.robot_id.upper()}")
+            # self.wait_for_finish_signal()
+            # print(f"✅ Secuencia completada para: {self.robot_id.upper()}")
 
         except Exception as e:
             print(f"❌ Error en secuencia de {self.robot_id.upper()}: {e}")
 
-        finally:
-            print(f"🛑 Cerrando conexión con {self.robot_id.upper()}")
-            self.controller.close()
-            print(f"{'-'*30}")
+        # finally:
+        #     print(f"🛑 Cerrando conexión con {self.robot_id.upper()}")
+        #     self.controller.close()
+        #     print(f"{'-'*30}")
 
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # def run(self):
     #     try:
     #         print(f"\n{'='*30}")
@@ -412,7 +412,7 @@ class IgusRobot:
     #             if not self.controller.load_programm(self.var_file):
     #                 raise Exception("❌ Fallo al cargar el archivo de variables.")
     #             print("✅ Variables inicializadas correctamente.")
-                
+
     #             print("▶️ Iniciando programa...")
     #             if not self.controller.start_programm():
     #                 raise Exception("❌ Error al iniciar el programa.")

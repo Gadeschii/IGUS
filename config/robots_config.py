@@ -12,11 +12,12 @@ robots = {
     "RebelLine": {
         "ip": "192.168.3.101",
         "port": 3920,
-        "program_name": "RebelLine.xml",
-        "sequence_path": "sequences/RebelLine/RebelLine.xml", 
+        "program_name": None,
+        "sequence_path": None, 
         "id": "rebelline",
         "var_file": "sequences/RebelLine/VariableRebelLine.xml"
     },
+    
      "Rebel2": {
         "ip": "192.168.3.103",
         "port": 3920,
