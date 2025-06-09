@@ -114,12 +114,49 @@ class IgusRobot:
             velocity=30.0,
             wait_move_finished=True
         )
+        
+    def move_to_safe_position_rebelLine(self):
+        """
+        Mueve el robot Rebel Line a una posición segura predefinida.
+        Lanza excepción si el movimiento falla por cualquier razón.
+        """
+        print("🕹️ Moviendo ejes a posición segura...")
+        time.sleep(5)
+        # ⚠️ Verifica que el robot esté habilitado y listo para moverse
+        if not self.controller.robot_state.active_control:
+            raise Exception("❌ El control remoto no está activo.")
+        
+        if not self.controller.robot_state.main_relay:
+            raise Exception("❌ El relé principal no está habilitado.")
+
+        # if self.controller.robot_state.kinematics_state != 0:  # 2 = Kinematics Ready
+        #     print(self.controller.robot_state.kinematics_state)
+        #     raise Exception("❌ La cinemática no está lista para moverse.")
+
+        # ❗ Verifica errores activos por eje
+        for i, err in enumerate(self.controller.robot_state.error_states):
+            if any([getattr(err, attr) for attr in vars(err)]):  # Si algún bit está activo
+                raise Exception(f"❌ Error activo en el eje {i}: {err}")
+
+        # 🚀 Intenta mover el robot
+        success = self.controller.move_joints(
+            A1= 60.0,
+            A2= 41.66,
+            A3=51.17,
+            A4= -0.7,
+            A5= 85.5,
+            A6= -33.5,
+            E1= 734.2,
+            E2=0.0,
+            E3=0.0,
+            velocity=30.0,
+            wait_move_finished=True
+        )
 
         if not success:
             raise Exception("❌ Fallo al mover a posición segura.")
         
         print("✅ Robot posicionado correctamente.")
-
 
     
     def prepare(self):
@@ -169,13 +206,13 @@ class IgusRobot:
                     raise Exception("❌ Fallo al referenciar el resto de ejes en SCARA.")
                 time.sleep(0.2)
                 
-                self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4"))
+                self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4","A5","A6","E1"))
                 time.sleep(1)
                 self.controller.reset()
                 time.sleep(0.5)
                 self.controller.enable()
                 time.sleep(0.5)
-                self.move_to_safe_position_scara()
+                self.move_to_safe_position_rebelLine()
 
                              
             elif self.robot_id == "rebelline1":
@@ -188,6 +225,15 @@ class IgusRobot:
                 print("✅ E1 referenciado. Continuando con el resto de ejes...")
                 if not self.controller.reference_all_joints():
                     raise Exception("❌ Fallo al referenciar el resto de ejes en REBELLINE.")
+                time.sleep(0.2)
+                self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4", ))
+                time.sleep(1)
+                self.controller.reset()
+                time.sleep(0.5)
+                self.controller.enable()
+                time.sleep(0.5)
+                self.move_to_safe_position_scara()
+                
                 
             else:
                 print("🎯 Referenciando todos los ejes...")

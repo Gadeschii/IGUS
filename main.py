@@ -23,23 +23,23 @@ def main():
         except Exception as e:
             print(f"❌ Error inicializando {name.upper()}: {e}")
 
-    # print("\n🕹️  ESPERANDO CONDICIONES PARA INICIAR SECUENCIAS...\n")
-    # launched = set()
-    # monitor = VariableMonitor(robots)
+    print("\n🕹️  ESPERANDO CONDICIONES PARA INICIAR SECUENCIAS...\n")
+    launched = set()
+    monitor = VariableMonitor(robots)
 
-    # while len(launched) < len(robot_instances):
-    #     monitor.update_variables()
-    #     current_vars = monitor.get_all()
+    while len(launched) < len(robot_instances):
+        monitor.update_variables()
+        current_vars = monitor.get_all()
 
-    #     for name, robot in robot_instances.items():
-    #         if name not in launched:
-    #             condition_fn = robot_start_conditions.get(name, lambda vars: False)
-    #             if condition_fn(current_vars):
-    #                 print(f"🚀 Lanzando secuencia para {name.upper()}")
-    #                 robot.run_sequence()
-    #                 launched.add(name)
+        for name, robot in robot_instances.items():
+            if name not in launched:
+                condition_fn = robot_start_conditions.get(name, lambda vars: False)
+                if condition_fn(current_vars):
+                    print(f"🚀 Lanzando secuencia para {name.upper()}")
+                    robot.run_sequence()
+                    launched.add(name)
 
-    #     sleep(1)
+        sleep(1)
 
 if __name__ == "__main__":
     main()
