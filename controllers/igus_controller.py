@@ -91,10 +91,6 @@ class IgusRobot:
         if not self.controller.robot_state.main_relay:
             raise Exception("❌ El relé principal no está habilitado.")
 
-        # if self.controller.robot_state.kinematics_state != 0:  # 2 = Kinematics Ready
-        #     print(self.controller.robot_state.kinematics_state)
-        #     raise Exception("❌ La cinemática no está lista para moverse.")
-
         # ❗ Verifica errores activos por eje
         for i, err in enumerate(self.controller.robot_state.error_states):
             if any([getattr(err, attr) for attr in vars(err)]):  # Si algún bit está activo
@@ -114,6 +110,10 @@ class IgusRobot:
             velocity=30.0,
             wait_move_finished=True
         )
+        if not success:
+            raise Exception("❌ Fallo al mover a posición segura.")   
+        print("✅ Robot posicionado correctamente.")
+        
         
     def move_to_safe_position_rebelLine(self):
         """
@@ -149,12 +149,13 @@ class IgusRobot:
             E1= 734.2,
             E2=0.0,
             E3=0.0,
-            velocity=30.0,
-            wait_move_finished=True
+            velocity=15.0,
+            wait_move_finished=True,
+            acceleration = 1.0
         )
 
-        if not success:
-            raise Exception("❌ Fallo al mover a posición segura.")
+        # if not success:
+        #     raise Exception("❌ Fallo al mover a posición segura.")
         
         print("✅ Robot posicionado correctamente.")
 
@@ -188,52 +189,79 @@ class IgusRobot:
             if self.robot_id == "scara":
                 print("🔧 Referenciando SCARA: primero A1...")
                 time.sleep(0.5)
+                
                 #self.controller.reference_single_joint('A1')
-                
                 print(f"📋 Resultado de reference_single_joint('A1'): {success}")
-                
                 time.sleep(0.5)
-                if not self.controller.reference_single_joint('A1'):
-                    raise Exception("❌ Fallo al referenciar A1 en SCARA.")
-                
-                
-                #print(self.controller.robot_state.referencing_state)
+                print("Check referenced axis")
+                print(self.controller.are_all_axes_referenced())
+                if self.controller.are_all_axes_referenced(axes=("A1", "A2", "A3","A4")):
+                    
+                    self.move_to_safe_position_scara()
+                else:
+                    
+                    if not self.controller.reference_single_joint('A1') :
+                        raise Exception("❌ Fallo al referenciar A1 en SCARA.") 
+                    
+                    # Esperar a que A1 esté referenciado
+                    self.wait_until_axes_referenced(axes=("A1",), timeout=200)
+
+                    # Una vez A1 esté referenciado, referenciar A4
+                    print("✅ A1 referenciado. Referenciando A4...")
+                    if not self.controller.reference_single_joint("A4"):
+                        raise Exception("❌ Fallo al iniciar la referencia de A4 en SCARA.")
+
+                    self.wait_until_axes_referenced(axes=("A4",), timeout=30)
+
+                    # Referenciar el resto de ejes
+                    print("✅ A4 referenciado. Referenciando el resto de ejes...")
+                    if not self.controller.reference_all_joints():
+                        raise Exception("❌ Fallo al referenciar el resto de ejes en SCARA.")
+                    time.sleep(0.2)
+                    
+                # print(self.controller.robot_state.referencing_state)
                 # print(self.controller.answer_events.get("info_referencing"))  
                 # self._wait_for_axis_referenced(joint_name='A1', target_value=469.0)
-
                
-                if not self.controller.reference_all_joints():
-                    raise Exception("❌ Fallo al referenciar el resto de ejes en SCARA.")
-                time.sleep(0.2)
+                    self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4")) #si veo qeu el A4 me da problema lo quito
+                    time.sleep(1)
+                    self.controller.reset()
+                    time.sleep(0.5)
+                    self.controller.enable()
+                    time.sleep(0.5)
+                    self.move_to_safe_position_scara()
                 
-                self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4","A5","A6","E1"))
-                time.sleep(1)
-                self.controller.reset()
-                time.sleep(0.5)
-                self.controller.enable()
-                time.sleep(0.5)
-                self.move_to_safe_position_rebelLine()
 
                              
-            elif self.robot_id == "rebelline1":
-                print("🔧 Referenciando REBELLINE: primero E1...")
-                time.sleep(0.5)
-                self.controller.reference_single_joint('E1')
-                
-                if not self.controller.reference_single_joint("E1"):
-                    raise Exception("❌ Fallo al referenciar E1 en REBELLINE.")
-                print("✅ E1 referenciado. Continuando con el resto de ejes...")
-                if not self.controller.reference_all_joints():
-                    raise Exception("❌ Fallo al referenciar el resto de ejes en REBELLINE.")
-                time.sleep(0.2)
-                self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4", ))
-                time.sleep(1)
-                self.controller.reset()
-                time.sleep(0.5)
-                self.controller.enable()
-                time.sleep(0.5)
-                self.move_to_safe_position_scara()
-                
+            elif self.robot_id == "rebelline":
+                if self.controller.are_all_axes_referenced(axes=("A1", "A2", "A3","A4", "A5", "A6","E1")):
+                    
+                    self.move_to_safe_position_rebelLine()
+                    
+                else:
+                    print("🔧 Referenciando REBELLINE: primero E1...")
+                    time.sleep(0.5)
+                      # self.controller.reference_single_joint('E1')
+                    print(f"📋 Resultado de reference_single_joint('E1'): {success}")
+                    time.sleep(0.5)
+                    if not self.controller.reference_single_joint('E1'):
+                        raise Exception("❌ Fallo al referenciar E1 en REBELLINE.")
+                    # Esperar a que E1 esté referenciado
+                    self.wait_until_axes_referenced(axes=("E1",), timeout=200)
+                    print("✅ E1 referenciado. Continuando con el resto de ejes...")
+                    
+                    if not self.controller.reference_all_joints():
+                        raise Exception("❌ Fallo al referenciar el resto de ejes en REBELLINE.")
+                    
+                    time.sleep(0.2)
+                    
+                    self.wait_until_axes_referenced(axes=("A1", "A2", "A3", "A4","A5","A6","E1" ))
+                    time.sleep(1)
+                    self.controller.reset()
+                    time.sleep(0.5)
+                    self.controller.enable()
+                    time.sleep(0.5)
+                    self.move_to_safe_position_rebelLine()
                 
             else:
                 print("🎯 Referenciando todos los ejes...")

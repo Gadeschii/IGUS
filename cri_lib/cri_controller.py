@@ -544,8 +544,37 @@ class CRIController:
                 return True
         else:
             return False
-        
+    
+    #Javi
+    def is_axis_referenced(self, axis: str) -> bool:
+        """
+        Comprueba si un eje está referenciado correctamente.
 
+        Parámetros:
+        -----------
+        axis: str
+            Nombre del eje (por ejemplo: 'A1', 'E1')
+
+        Devuelve:
+        ---------
+        bool: True si el eje está referenciado, False si no lo está
+        """
+        self.get_referencing_info()
+        state = self.robot_state.referencing_state
+
+        try:
+            axis_state = getattr(state, axis)
+            if axis_state == ReferencingAxisState.REFERENCED:
+                print(f"✅ {axis} está referenciado.")
+                return True
+            else:
+                print(f"❌ {axis} NO está referenciado (estado: {axis_state.name})")
+                return False
+        except AttributeError:
+            print(f"⚠️ Eje {axis} no encontrado en el estado de referenciado.")
+            return False
+
+     #Javi:   
     def are_all_axes_referenced(self, axes=("A1", "A2", "A3","A4", "A5", "A6","E1")) -> bool:
         """
         Comprueba si todos los ejes dados están referenciados correctamente.
@@ -561,7 +590,9 @@ class CRIController:
         """
         self.get_referencing_info()
         state = self.robot_state.referencing_state
-
+        
+        
+       
         for axis in axes:
             axis_state = getattr(state, axis)
             if axis_state != ReferencingAxisState.REFERENCED:
@@ -571,7 +602,32 @@ class CRIController:
                 print(f"✅ {axis} referenciado")
         return True
 
-    
+    #Javi:
+    def get_axis_reference_state(self, axis: str) -> str:
+        """
+        Devuelve el estado de referenciado de un eje.
+
+        Parámetros:
+        -----------
+        axis: str
+            Nombre del eje (por ejemplo: 'A1', 'E1')
+
+        Devuelve:
+        ---------
+        str: Estado del eje (por ejemplo: 'REFERENCED', 'NOT_REFERENCED', 'REFERENCING', etc.)
+            o 'UNKNOWN' si no se encuentra el eje
+        """
+        self.get_referencing_info()
+        state = self.robot_state.referencing_state
+
+        try:
+            axis_state = getattr(state, axis)
+            print(f"🔍 Estado de {axis}: {axis_state.name}")
+            return axis_state.name
+        except AttributeError:
+            print(f"⚠️ Eje {axis} no encontrado en el estado de referenciado.")
+            return "UNKNOWN"
+
     def get_referencing_info(self):
         """Reference all joints. Long timout of 30 seconds.
 
